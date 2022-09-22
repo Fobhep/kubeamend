@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+set -e
+
+# Error codes
+E2BIG=7
+EINVAL=22
+E2SMALL=64
+
+NAME="my-script"
+USAGE=$(cat << END
+    kubeamend <file-path>
+    This helper-script merges ~/.kube/config with the given kubeconfig file into ~/.kube/config
+END
+)
+
+# This script requires exactly one argument. If less are provided it prints
+# the USAGE instructions
+if [ ${#} -lt 1 ] ; then
+    printf '%s\n' "${USAGE}"
+    exit $E2SMALL
+fi
+if [ "${1}" = "-h" ] || [ "${1}" = "--help" ] ; then
+    printf '%s\n' "${USAGE}"
+    exit 0
+fi
+if [ ${#} -gt 1 ] ; then
+    printf '%s\n' "${USAGE}"
+    exit $E2BIG
+fi
+
+cp ~/.kube/config ~/.kube/config.bak
+
+KUBECONFIG=~/.kube/config:$1 kubectl config view --flatten > /tmp/config
+
+mv /tmp/config ~/.kube/config
+
+rm ~/.kube/config.bak
